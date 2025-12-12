@@ -93,16 +93,21 @@ export default function Alerts() {
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <Badge variant={alert.severity}>{alert.severity}</Badge>
-              <Badge variant={alert.type === 'rule' ? 'info' : 'secondary'} className="gap-1">
+              <Badge variant={alert.type === 'rule' ? 'info' : alert.type === 'anomaly' ? 'secondary' : 'warning'} className="gap-1">
                 {alert.type === 'rule' ? (
                   <>
                     <Shield className="h-3 w-3" />
                     Rule-Based
                   </>
-                ) : (
+                ) : alert.type === 'anomaly' ? (
                   <>
                     <Brain className="h-3 w-3" />
                     Anomaly
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-3 w-3" />
+                    Behavioral
                   </>
                 )}
               </Badge>
@@ -231,7 +236,7 @@ export default function Alerts() {
               </div>
               
               <div className="flex items-center gap-1 rounded-lg border p-1">
-                {(['all', 'rule', 'anomaly'] as const).map((type) => (
+                {(['all', 'rule', 'anomaly', 'behavioral'] as const).map((type) => (
                   <Button
                     key={type}
                     variant={typeFilter === type ? 'default' : 'ghost'}
