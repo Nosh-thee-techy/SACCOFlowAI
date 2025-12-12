@@ -1,73 +1,221 @@
-# Welcome to your Lovable project
+# 🛡️ SACCO Fraud Detection System
 
-## Project info
+A modern, real-time fraud detection platform built for Savings and Credit Cooperative Organizations (SACCOs). Designed to help administrators identify suspicious activities early, protect member assets, and maintain operational integrity.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## ✨ What This System Does
 
-There are several ways of editing your application.
+Managing a SACCO means protecting your members' hard-earned savings. This system acts as your vigilant partner, continuously monitoring transactions and alerting you to potential fraud before it causes damage.
 
-**Use Lovable**
+**Three layers of protection:**
+- **Rule-Based Detection** — Catches obvious red flags like unusually large transactions or after-hours activity
+- **Statistical Anomaly Detection** — Identifies transactions that deviate significantly from normal patterns
+- **Behavioral Analytics** — Learns member habits over time to spot subtle, coordinated fraud attempts
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🏗️ System Architecture
 
-**Use your preferred IDE**
+<presentation-mermaid>
+graph TB
+    subgraph Client["Frontend (React + Vite)"]
+        UI[Dashboard UI]
+        Charts[Real-time Charts]
+        Alerts[Alert Management]
+        Auth[Authentication]
+    end
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+    subgraph State["State Management"]
+        Zustand[Zustand Store]
+    end
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+    subgraph Detection["Fraud Detection Engine"]
+        Rules[Rule-Based Checks]
+        Anomaly[Anomaly Detection]
+        Behavioral[Behavioral Analysis]
+    end
 
-Follow these steps:
+    subgraph Backend["Lovable Cloud (Supabase)"]
+        AuthService[Authentication]
+        Database[(PostgreSQL)]
+        RLS[Row Level Security]
+    end
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+    UI --> Zustand
+    Charts --> Zustand
+    Alerts --> Zustand
+    Auth --> AuthService
+    
+    Zustand --> Detection
+    Detection --> Rules
+    Detection --> Anomaly
+    Detection --> Behavioral
+    
+    AuthService --> Database
+    Database --> RLS
+</presentation-mermaid>
+
+### Data Flow
+
+<presentation-mermaid>
+sequenceDiagram
+    participant User as Administrator
+    participant App as Dashboard
+    participant Engine as Detection Engine
+    participant Store as Zustand Store
+    participant DB as Database
+
+    User->>App: Upload CSV / Start Live Feed
+    App->>Engine: Process Transactions
+    Engine->>Engine: Rule-Based Checks
+    Engine->>Engine: Anomaly Detection
+    Engine->>Engine: Behavioral Analysis
+    Engine->>Store: Update State with Alerts
+    Store->>App: Real-time UI Update
+    App->>User: Display Alerts & Metrics
+    User->>App: Review & Resolve Alerts
+    App->>DB: Persist Actions
+</presentation-mermaid>
+
+---
+
+## 🔐 User Roles & Access
+
+| Role | Dashboard | Transactions | Alerts | Settings | Analytics |
+|------|-----------|--------------|--------|----------|-----------|
+| **Admin** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| **Risk Officer** | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
+| **Auditor** | ✅ View | ✅ View | ✅ View | ❌ None | ✅ View |
+
+New users are assigned the **Auditor** role by default for security.
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React 18, TypeScript, Vite |
+| **Styling** | Tailwind CSS, shadcn/ui |
+| **State** | Zustand |
+| **Charts** | Recharts |
+| **Backend** | Lovable Cloud (Supabase) |
+| **Auth** | Supabase Auth with RLS |
+| **Export** | jsPDF, CSV generation |
+
+---
+
+## 🚀 Deployment
+
+### Option 1: Deploy with Lovable (Recommended)
+
+The fastest way to get your fraud detection system live:
+
+1. Open your project in [Lovable](https://lovable.dev)
+2. Click **Publish** in the top-right corner
+3. Click **Update** to deploy your changes
+4. Your app is live! Share the provided URL with your team
+
+**Custom Domain Setup:**
+1. Go to **Project → Settings → Domains**
+2. Click **Connect Domain**
+3. Follow the DNS configuration instructions
+4. SSL is automatically provisioned
+
+### Option 2: Self-Hosting
+
+Clone and deploy to your own infrastructure:
+
+```bash
+# Clone the repository
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Build for production
+npm run build
+
+# Preview the build locally
+npm run preview
 ```
 
-**Edit a file directly in GitHub**
+The `dist/` folder contains your production-ready static files. Deploy to any static hosting provider:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Provider | Command/Notes |
+|----------|---------------|
+| **Vercel** | `vercel --prod` |
+| **Netlify** | Drag & drop `dist/` folder |
+| **AWS S3** | Upload to S3 + CloudFront |
+| **Cloudflare Pages** | Connect GitHub repo |
 
-**Use GitHub Codespaces**
+### Environment Variables
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+For self-hosted deployments, configure these variables:
 
-## What technologies are used for this project?
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+```
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📁 Project Structure
 
-## How can I deploy this project?
+```
+src/
+├── components/
+│   ├── dashboard/      # Dashboard widgets & charts
+│   ├── layout/         # Navigation & page structure
+│   ├── transactions/   # Transaction management
+│   ├── alerts/         # Alert components
+│   └── ui/             # Reusable UI components (shadcn)
+├── contexts/           # React contexts (Auth)
+├── hooks/              # Custom React hooks
+├── lib/
+│   ├── fraudDetection.ts    # Rule-based detection
+│   ├── behavioralAnalysis.ts # Behavioral patterns
+│   ├── liveFeedSimulator.ts  # Demo data generation
+│   ├── exportUtils.ts        # CSV/PDF exports
+│   ├── store.ts              # Zustand state
+│   └── types.ts              # TypeScript definitions
+├── pages/              # Route components
+└── integrations/       # Backend integrations
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 🎯 Key Features
 
-Yes, you can!
+- **Real-time Monitoring** — Live transaction feed with instant fraud detection
+- **Multi-layer Detection** — Rule-based, statistical, and behavioral analysis
+- **Risk Scoring** — Automatic risk scoring for members based on activity
+- **Export Reports** — Generate PDF/CSV reports for audits and board meetings
+- **Dark Mode** — Professional dark-first design with light mode option
+- **Role-based Access** — Granular permissions for different user types
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🤝 Contributing
+
+We welcome contributions! Whether it's bug fixes, new detection rules, or UI improvements:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is proprietary software developed for SACCO fraud detection purposes.
+
+---
+
+<p align="center">
+  Built with ❤️ for safer SACCOs everywhere
+</p>
