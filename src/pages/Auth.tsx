@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Loader2, AlertCircle } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Shield, Loader2, AlertCircle, UserCog, Eye, ShieldCheck } from 'lucide-react';
 import { z } from 'zod';
 import { toast } from 'sonner';
 
@@ -19,7 +20,28 @@ const signupSchema = z.object({
   email: z.string().trim().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   fullName: z.string().trim().min(2, 'Full name must be at least 2 characters'),
+  role: z.enum(['admin', 'risk_officer', 'auditor']),
 });
+
+type AppRole = 'admin' | 'risk_officer' | 'auditor';
+
+const roleDetails: Record<AppRole, { label: string; description: string; icon: React.ReactNode }> = {
+  admin: {
+    label: 'Administrator',
+    description: 'Full system access, manage users and settings',
+    icon: <UserCog className="h-5 w-5" />,
+  },
+  risk_officer: {
+    label: 'Risk Officer',
+    description: 'Monitor alerts, configure detection rules',
+    icon: <ShieldCheck className="h-5 w-5" />,
+  },
+  auditor: {
+    label: 'Auditor',
+    description: 'View-only access to reports and analytics',
+    icon: <Eye className="h-5 w-5" />,
+  },
+};
 
 export default function Auth() {
   const { user, signIn, signUp, loading: authLoading } = useAuth();
@@ -32,6 +54,7 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [selectedRole, setSelectedRole] = useState<AppRole>('auditor');
 
   useEffect(() => {
     if (user) {
@@ -71,14 +94,14 @@ export default function Auth() {
     e.preventDefault();
     setError(null);
 
-    const validation = signupSchema.safeParse({ email, password, fullName });
+    const validation = signupSchema.safeParse({ email, password, fullName, role: selectedRole });
     if (!validation.success) {
       setError(validation.error.errors[0].message);
       return;
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password, fullName);
+    const { error } = await signUp(email, password, fullName, selectedRole);
     setLoading(false);
 
     if (error) {
@@ -197,16 +220,49 @@ export default function Auth() {
                   />
                 </div>
 
+                <div className="space-y-3">
+                  <Label>Select Your Role</Label>
+                  <RadioGroup
+                    value={selectedRole}
+                    onValueChange={(value) => setSelectedRole(value as AppRole)}
+                    className="space-y-2"
+                  >
+                    {(Object.keys(roleDetails) as AppRole[]).map((role) => (
+                      <div
+                        key={role}
+                        className={`flex items-center space-x-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                          selectedRole === role
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        onClick={() => setSelectedRole(role)}
+                      >
+                        <RadioGroupItem value={role} id={role} />
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className={`p-2 rounded-md ${
+                            selectedRole === role ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                          }`}>
+                            {roleDetails[role].icon}
+                          </div>
+                          <div className="flex-1">
+                            <Label htmlFor={role} className="cursor-pointer font-medium">
+                              {roleDetails[role].label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              {roleDetails[role].description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Create Account
                 </Button>
               </form>
-
-              <p className="text-center text-xs text-muted-foreground">
-                New accounts are assigned the Auditor role by default.
-                Contact an admin for role upgrades.
-              </p>
             </TabsContent>
           </Tabs>
         </CardContent>
