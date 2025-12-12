@@ -5,10 +5,13 @@ import { VolumeChart, HourlyChart, TrendChart } from '@/components/dashboard/Cha
 import { RecentAlerts } from '@/components/dashboard/RecentAlerts';
 import { MemberRiskTable } from '@/components/dashboard/MemberRiskTable';
 import { generateVolumeChartData, generateHourlyData, generateMonthlyTrend } from '@/lib/mockData';
-import { Loader2 } from 'lucide-react';
+import { exportDashboardReportPDF } from '@/lib/exportUtils';
+import { Loader2, FileDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function Dashboard() {
-  const { stats, alerts, memberProfiles, isLoading, initialize } = useFraudStore();
+  const { stats, alerts, memberProfiles, transactions, isLoading, initialize } = useFraudStore();
 
   useEffect(() => {
     initialize();
@@ -29,16 +32,27 @@ export default function Dashboard() {
   const hourlyData = generateHourlyData();
   const trendData = generateMonthlyTrend();
 
+  const handleExportReport = () => {
+    exportDashboardReportPDF(stats, alerts, transactions);
+    toast.success('Dashboard report exported to PDF');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Fraud Detection Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Real-time monitoring and analysis of SACCO transactions
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Fraud Detection Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Real-time monitoring and analysis of SACCO transactions
+          </p>
+        </div>
+        <Button onClick={handleExportReport} variant="outline" className="gap-2 w-fit">
+          <FileDown className="h-4 w-4" />
+          Export Report
+        </Button>
       </div>
 
       {/* Stats Cards */}

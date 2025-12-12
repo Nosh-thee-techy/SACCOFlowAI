@@ -8,26 +8,66 @@ import {
   Moon,
   Sun,
   Menu,
-  X
+  X,
+  LogOut,
+  User,
+  ChevronDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFraudStore } from '@/lib/store';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
 
-const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft },
-  { path: '/alerts', label: 'Alerts', icon: AlertTriangle },
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
+const getRoleLabel = (role: string | null) => {
+  switch (role) {
+    case 'admin': return 'Admin';
+    case 'risk_officer': return 'Risk Officer';
+    case 'auditor': return 'Auditor';
+    default: return 'User';
+  }
+};
+
+const getRoleBadgeVariant = (role: string | null) => {
+  switch (role) {
+    case 'admin': return 'critical' as const;
+    case 'risk_officer': return 'warning' as const;
+    case 'auditor': return 'info' as const;
+    default: return 'secondary' as const;
+  }
+};
 
 export function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme, stats } = useFraudStore();
+  const { user, role, signOut, hasRole } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const unreviewed = stats.totalAlerts - stats.reviewedAlerts;
+
+  // Filter nav items based on role
+  const navItems = [
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, minRole: null },
+    { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft, minRole: null },
+    { path: '/alerts', label: 'Alerts', icon: AlertTriangle, minRole: null },
+    { path: '/settings', label: 'Settings', icon: Settings, minRole: 'risk_officer' as const },
+  ].filter(item => {
+    if (!item.minRole) return true;
+    return hasRole(item.minRole);
+  });
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -88,6 +128,33 @@ export function Navbar() {
             )}
           </Button>
 
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                  <User className="h-4 w-4 text-primary" />
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{user?.email}</p>
+                  <Badge variant={getRoleBadgeVariant(role)} className="w-fit">
+                    {getRoleLabel(role)}
+                  </Badge>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Mobile menu button */}
           <Button
             variant="ghost"
@@ -131,6 +198,18 @@ export function Navbar() {
                 </Link>
               );
             })}
+            
+            {/* Mobile logout */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleSignOut();
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-all duration-200"
+            >
+              <LogOut className="h-5 w-5" />
+              Logout
+            </button>
           </div>
         </nav>
       )}

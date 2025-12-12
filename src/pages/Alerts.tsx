@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useFraudStore } from '@/lib/store';
 import { Alert } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { exportAlertsToCSV, exportAlertsToPDF } from '@/lib/exportUtils';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -14,9 +15,12 @@ import {
   Clock,
   Filter,
   Shield,
-  Brain
+  Brain,
+  FileDown,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export default function Alerts() {
   const { alerts, markAlertReviewed, stats } = useFraudStore();
@@ -145,13 +149,23 @@ export default function Alerts() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Fraud Alerts
-        </h1>
-        <p className="text-muted-foreground">
-          Review and manage fraud detection alerts
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Fraud Alerts
+          </h1>
+          <p className="text-muted-foreground">
+            Review and manage fraud detection alerts
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { exportAlertsToCSV(alerts); toast.success('Exported to CSV'); }}>
+            <FileDown className="h-4 w-4 mr-1" /> CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { exportAlertsToPDF(alerts); toast.success('Exported to PDF'); }}>
+            <FileText className="h-4 w-4 mr-1" /> PDF
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
