@@ -1,1 +1,19 @@
 project_id = "sexdhhqyewobtcmrprdn"
+
+[functions.transactions]
+verify_jwt = false
+
+[functions.approvals]
+verify_jwt = false
+
+[functions.alerts]
+verify_jwt = false
+
+[functions.audit-logs]
+verify_jwt = false
+
+[functions.whistleblower]
+verify_jwt = false
+
+[functions.risk-check]
+verify_jwt = false
