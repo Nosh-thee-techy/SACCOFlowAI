@@ -1,6 +1,6 @@
-# 🛡️ SACCO Fraud Detection System
+# 🛡️ SACCO Flow AI
 
-A modern, real-time fraud detection platform built for Savings and Credit Cooperative Organizations (SACCOs). Designed to help administrators identify suspicious activities early, protect member assets, and maintain operational integrity.
+An intelligent, real-time fraud detection platform built for Savings and Credit Cooperative Organizations (SACCOs). Designed to help administrators identify suspicious activities early, protect member assets, and maintain operational integrity.
 
 ---
 

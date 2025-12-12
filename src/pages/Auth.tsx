@@ -108,8 +108,8 @@ export default function Auth() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl gradient-primary shadow-glow">
             <Shield className="h-8 w-8 text-primary-foreground" />
           </div>
-          <CardTitle className="text-2xl font-bold">FraudGuard</CardTitle>
-          <CardDescription>SACCO Fraud Detection System</CardDescription>
+          <CardTitle className="text-2xl font-bold">SACCO Flow AI</CardTitle>
+          <CardDescription>Intelligent Fraud Detection</CardDescription>
         </CardHeader>
 
         <CardContent>
