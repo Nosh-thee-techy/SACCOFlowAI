@@ -4,9 +4,12 @@ import { StatsCards } from '@/components/dashboard/StatsCards';
 import { VolumeChart, HourlyChart, TrendChart } from '@/components/dashboard/Charts';
 import { RecentAlerts } from '@/components/dashboard/RecentAlerts';
 import { MemberRiskTable } from '@/components/dashboard/MemberRiskTable';
+import { FraudOverviewBanner } from '@/components/dashboard/FraudOverviewBanner';
+import { QuickActionsPanel } from '@/components/dashboard/QuickActionsPanel';
+import { RiskGauge } from '@/components/dashboard/RiskGauge';
 import { generateVolumeChartData, generateHourlyData, generateMonthlyTrend } from '@/lib/mockData';
 import { exportDashboardReportPDF } from '@/lib/exportUtils';
-import { Loader2, FileDown } from 'lucide-react';
+import { Loader2, FileDown, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -37,14 +40,29 @@ export default function Dashboard() {
     toast.success('Dashboard report exported to PDF');
   };
 
+  // Calculate risk level based on alerts
+  const criticalCount = alerts.filter(a => a.severity === 'critical' && !a.reviewed).length;
+  const highCount = alerts.filter(a => a.severity === 'high' && !a.reviewed).length;
+  
+  const riskLevel = criticalCount > 0 
+    ? 'critical' 
+    : highCount > 2 
+      ? 'high' 
+      : highCount > 0 
+        ? 'medium' 
+        : 'low';
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Fraud Detection Dashboard
-          </h1>
+          <div className="flex items-center gap-2">
+            <Shield className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Fraud Detection Dashboard
+            </h1>
+          </div>
           <p className="text-muted-foreground">
             Real-time monitoring and analysis of SACCO transactions
           </p>
@@ -55,8 +73,19 @@ export default function Dashboard() {
         </Button>
       </div>
 
+      {/* Fraud Overview Banner - Banking style alert */}
+      <FraudOverviewBanner alerts={alerts} riskLevel={riskLevel} />
+
       {/* Stats Cards */}
       <StatsCards stats={stats} />
+
+      {/* Quick Actions & Risk Gauge */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <QuickActionsPanel />
+        </div>
+        <RiskGauge />
+      </div>
 
       {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-3">

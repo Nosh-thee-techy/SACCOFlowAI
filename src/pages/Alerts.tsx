@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertNotificationCard } from '@/components/alerts/AlertNotificationCard';
 import { 
   CheckCircle, 
   Search, 
@@ -15,9 +16,12 @@ import {
   Clock,
   Filter,
   Shield,
+  ShieldAlert,
   Brain,
   FileDown,
-  FileText
+  FileText,
+  Bell,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -69,96 +73,29 @@ export default function Alerts() {
     }
   };
 
-  const renderAlertCard = (alert: Alert) => (
-    <Card
-      key={alert.id}
-      variant="glass"
-      className={cn(
-        "transition-all duration-200 hover:shadow-md animate-fade-in",
-        alert.reviewed && "opacity-60"
-      )}
-    >
-      <CardContent className="p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <div className={cn(
-            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-            alert.severity === 'critical' && "bg-destructive/10 text-destructive",
-            alert.severity === 'high' && "bg-warning/10 text-warning",
-            alert.severity === 'medium' && "bg-chart-5/10 text-chart-5",
-            alert.severity === 'low' && "bg-muted text-muted-foreground",
-          )}>
-            {getSeverityIcon(alert.severity)}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <Badge variant={alert.severity}>{alert.severity}</Badge>
-              <Badge variant={alert.type === 'rule' ? 'info' : alert.type === 'anomaly' ? 'secondary' : 'warning'} className="gap-1">
-                {alert.type === 'rule' ? (
-                  <>
-                    <Shield className="h-3 w-3" />
-                    Rule-Based
-                  </>
-                ) : alert.type === 'anomaly' ? (
-                  <>
-                    <Brain className="h-3 w-3" />
-                    Anomaly
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-3 w-3" />
-                    Behavioral
-                  </>
-                )}
-              </Badge>
-              {alert.rule_type && (
-                <Badge variant="outline">{alert.rule_type}</Badge>
-              )}
-            </div>
-            
-            <p className="text-sm font-medium mb-1">{alert.reason}</p>
-            
-            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              <span className="font-mono">Member: {alert.member_id}</span>
-              <span className="font-mono">TX: {alert.transaction_id}</span>
-              <span>Confidence: {Math.round(alert.confidence * 100)}%</span>
-            </div>
-            
-            <div className="mt-2 text-xs text-muted-foreground">
-              {alert.timestamp.toLocaleString()}
-            </div>
-          </div>
+  // Calculate risk level for overview
+  const criticalCount = alerts.filter(a => a.severity === 'critical' && !a.reviewed).length;
+  const highCount = alerts.filter(a => a.severity === 'high' && !a.reviewed).length;
 
-          <div className="flex items-center gap-2">
-            {alert.reviewed ? (
-              <Badge variant="success" className="gap-1">
-                <CheckCircle className="h-3 w-3" />
-                Reviewed
-              </Badge>
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => markAlertReviewed(alert.id)}
-              >
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Mark as Reviewed
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+  const riskLevel = criticalCount > 0 
+    ? 'critical' 
+    : highCount > 2 
+      ? 'high' 
+      : highCount > 0 
+        ? 'medium' 
+        : 'low';
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header with security branding */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Fraud Alerts
-          </h1>
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Alert Centre
+            </h1>
+          </div>
           <p className="text-muted-foreground">
             Review and manage fraud detection alerts
           </p>
@@ -173,12 +110,71 @@ export default function Alerts() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Risk Overview Banner */}
+      <Card className={cn(
+        "relative overflow-hidden border-2 transition-all duration-300",
+        riskLevel === 'critical' && "border-destructive/50 bg-destructive/5",
+        riskLevel === 'high' && "border-warning/50 bg-warning/5",
+        riskLevel === 'medium' && "border-chart-5/50 bg-chart-5/5",
+        riskLevel === 'low' && "border-success/50 bg-success/5"
+      )}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "flex h-12 w-12 items-center justify-center rounded-xl",
+                riskLevel === 'critical' && "bg-destructive/10 text-destructive",
+                riskLevel === 'high' && "bg-warning/10 text-warning",
+                riskLevel === 'medium' && "bg-chart-5/10 text-chart-5",
+                riskLevel === 'low' && "bg-success/10 text-success"
+              )}>
+                {riskLevel === 'critical' ? <ShieldAlert className="h-6 w-6" /> :
+                 riskLevel === 'high' ? <AlertTriangle className="h-6 w-6" /> :
+                 riskLevel === 'low' ? <Shield className="h-6 w-6" /> :
+                 <Bell className="h-6 w-6" />}
+              </div>
+              <div>
+                <p className={cn(
+                  "text-lg font-semibold capitalize",
+                  riskLevel === 'critical' && "text-destructive",
+                  riskLevel === 'high' && "text-warning",
+                  riskLevel === 'medium' && "text-chart-5",
+                  riskLevel === 'low' && "text-success"
+                )}>
+                  {riskLevel === 'low' ? 'All Clear' : `${riskLevel} Risk Level`}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {pendingAlerts.length === 0 
+                    ? 'No pending alerts - all transactions normal'
+                    : `${pendingAlerts.length} alert${pendingAlerts.length > 1 ? 's' : ''} requiring attention`
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 text-sm">
+              {criticalCount > 0 && (
+                <div className="flex items-center gap-1 text-destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <span className="font-semibold">{criticalCount}</span> critical
+                </div>
+              )}
+              {highCount > 0 && (
+                <div className="flex items-center gap-1 text-warning">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="font-semibold">{highCount}</span> high
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Stats - Compact summary */}
       <div className="grid gap-4 sm:grid-cols-4">
         <Card variant="stat" className="border-l-4 border-l-destructive">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-destructive">
-              {alerts.filter(a => a.severity === 'critical' && !a.reviewed).length}
+              {criticalCount}
             </div>
             <p className="text-sm text-muted-foreground">Critical</p>
           </CardContent>
@@ -186,7 +182,7 @@ export default function Alerts() {
         <Card variant="stat" className="border-l-4 border-l-warning">
           <CardContent className="py-4">
             <div className="text-2xl font-bold text-warning">
-              {alerts.filter(a => a.severity === 'high' && !a.reviewed).length}
+              {highCount}
             </div>
             <p className="text-sm text-muted-foreground">High Priority</p>
           </CardContent>
@@ -276,7 +272,9 @@ export default function Alerts() {
               </CardContent>
             </Card>
           ) : (
-            pendingAlerts.map(renderAlertCard)
+            pendingAlerts.map((alert) => (
+              <AlertNotificationCard key={alert.id} alert={alert} />
+            ))
           )}
         </TabsContent>
 
@@ -290,7 +288,9 @@ export default function Alerts() {
               </CardContent>
             </Card>
           ) : (
-            reviewedAlerts.map(renderAlertCard)
+            reviewedAlerts.map((alert) => (
+              <AlertNotificationCard key={alert.id} alert={alert} />
+            ))
           )}
         </TabsContent>
       </Tabs>
