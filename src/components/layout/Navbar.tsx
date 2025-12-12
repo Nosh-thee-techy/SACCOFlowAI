@@ -80,8 +80,8 @@ export function Navbar() {
             <Shield className="h-5 w-5 text-primary-foreground" />
           </div>
           <div className="hidden sm:block">
-            <h1 className="text-lg font-bold tracking-tight">FraudGuard</h1>
-            <p className="text-xs text-muted-foreground">SACCO Protection</p>
+            <h1 className="text-lg font-bold tracking-tight">SACCO Flow AI</h1>
+            <p className="text-xs text-muted-foreground">Intelligent Protection</p>
           </div>
         </Link>
 
