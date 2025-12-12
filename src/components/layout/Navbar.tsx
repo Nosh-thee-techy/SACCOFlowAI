@@ -32,6 +32,8 @@ import { Badge } from '@/components/ui/badge';
 const getRoleLabel = (role: string | null) => {
   switch (role) {
     case 'admin': return 'Admin';
+    case 'branch_manager': return 'Branch Manager';
+    case 'teller': return 'Teller';
     case 'risk_officer': return 'Risk Officer';
     case 'auditor': return 'Auditor';
     default: return 'User';
@@ -41,6 +43,8 @@ const getRoleLabel = (role: string | null) => {
 const getRoleBadgeVariant = (role: string | null) => {
   switch (role) {
     case 'admin': return 'critical' as const;
+    case 'branch_manager': return 'warning' as const;
+    case 'teller': return 'success' as const;
     case 'risk_officer': return 'warning' as const;
     case 'auditor': return 'info' as const;
     default: return 'secondary' as const;

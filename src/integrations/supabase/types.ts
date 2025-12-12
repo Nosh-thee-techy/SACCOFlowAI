@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          alert_type: string
+          assigned_to: string | null
+          confidence: number
+          created_at: string
+          id: string
+          member_id: string
+          reason: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          assigned_to?: string | null
+          confidence: number
+          created_at?: string
+          id?: string
+          member_id: string
+          reason: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          assigned_to?: string | null
+          confidence?: number
+          created_at?: string
+          id?: string
+          member_id?: string
+          reason?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          entity_id: string
+          entity_type: string
+          hash: string
+          id: number
+          payload: Json
+          prev_hash: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          hash: string
+          id?: number
+          payload: Json
+          prev_hash?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          hash?: string
+          id?: number
+          payload?: Json
+          prev_hash?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -41,6 +133,66 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          account_balance: number
+          ai_metadata: Json | null
+          amount: number
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          device_fingerprint: string | null
+          flags: string[] | null
+          geo_location: string | null
+          id: string
+          member_id: string
+          risk_score: number | null
+          status: string
+          transaction_id: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          account_balance: number
+          ai_metadata?: Json | null
+          amount: number
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_fingerprint?: string | null
+          flags?: string[] | null
+          geo_location?: string | null
+          id?: string
+          member_id: string
+          risk_score?: number | null
+          status?: string
+          transaction_id: string
+          transaction_type: string
+          updated_at?: string
+        }
+        Update: {
+          account_balance?: number
+          ai_metadata?: Json | null
+          amount?: number
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          device_fingerprint?: string | null
+          flags?: string[] | null
+          geo_location?: string | null
+          id?: string
+          member_id?: string
+          risk_score?: number | null
+          status?: string
+          transaction_id?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -62,6 +214,39 @@ export type Database = {
         }
         Relationships: []
       }
+      whistleblower_reports: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string
+          evidence_urls: string[] | null
+          id: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description: string
+          evidence_urls?: string[] | null
+          id?: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string
+          evidence_urls?: string[] | null
+          id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -80,7 +265,12 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "risk_officer" | "auditor"
+      app_role:
+        | "admin"
+        | "branch_manager"
+        | "teller"
+        | "risk_officer"
+        | "auditor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -208,7 +398,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "risk_officer", "auditor"],
+      app_role: [
+        "admin",
+        "branch_manager",
+        "teller",
+        "risk_officer",
+        "auditor",
+      ],
     },
   },
 } as const
