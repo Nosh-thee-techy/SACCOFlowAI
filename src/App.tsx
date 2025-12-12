@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Alerts from "./pages/Alerts";
+import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -40,10 +41,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            {/* Public route */}
             <Route path="/auth" element={<Auth />} />
             
-            {/* Protected routes */}
             <Route element={
               <ProtectedRoute>
                 <Layout />
@@ -52,6 +51,7 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/alerts" element={<Alerts />} />
+              <Route path="/analytics" element={<Analytics />} />
               <Route path="/settings" element={
                 <ProtectedRoute allowedRoles={['admin', 'risk_officer']}>
                   <Settings />

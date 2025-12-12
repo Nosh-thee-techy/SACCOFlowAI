@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Transaction, Alert, MemberProfile, DashboardStats } from './types';
+import { Transaction, Alert, MemberProfile, DashboardStats, LiveFeedConfig, DetectionSettings } from './types';
 import { 
   generateTransactions, 
   generateAlerts, 
@@ -7,6 +7,7 @@ import {
   calculateDashboardStats 
 } from './mockData';
 import { detectRuleBasedFraud, detectAnomalies, calculateRiskScore } from './fraudDetection';
+import { detectBehavioralAnomaly, detectPeerAnomaly } from './behavioralAnalysis';
 
 interface FraudStore {
   transactions: Transaction[];
@@ -15,6 +16,8 @@ interface FraudStore {
   stats: DashboardStats;
   isLoading: boolean;
   theme: 'light' | 'dark';
+  liveFeed: LiveFeedConfig;
+  settings: DetectionSettings;
   
   // Actions
   initialize: () => void;
@@ -23,7 +26,21 @@ interface FraudStore {
   runFraudDetection: (transactions: Transaction[]) => void;
   toggleTheme: () => void;
   clearAlerts: () => void;
+  setLiveFeed: (config: Partial<LiveFeedConfig>) => void;
+  updateSettings: (settings: Partial<DetectionSettings>) => void;
+  addHistoricalData: (transactions: Transaction[]) => void;
 }
+
+const defaultSettings: DetectionSettings = {
+  largeTransactionThreshold: 100000,
+  businessHoursStart: 8,
+  businessHoursEnd: 18,
+  rapidWithdrawalCount: 3,
+  zScoreThreshold: 2.5,
+  minTransactionHistory: 5,
+  volumeSpikeEnabled: true,
+  behavioralAnalysisEnabled: true,
+};
 
 export const useFraudStore = create<FraudStore>((set, get) => ({
   transactions: [],
@@ -39,6 +56,11 @@ export const useFraudStore = create<FraudStore>((set, get) => ({
   },
   isLoading: true,
   theme: 'dark',
+  liveFeed: {
+    enabled: false,
+    intervalMs: 5000,
+  },
+  settings: defaultSettings,
 
   initialize: () => {
     const transactions = generateTransactions(200);
@@ -82,6 +104,15 @@ export const useFraudStore = create<FraudStore>((set, get) => ({
 
       if (ruleAlert) newAlerts.push(ruleAlert);
       if (anomalyAlert) newAlerts.push(anomalyAlert);
+      
+      // Behavioral analysis
+      const memberTransactions = transactions.filter(t => t.member_id === txn.member_id);
+      const behavioralAlert = detectBehavioralAnomaly(txn, profile, memberTransactions);
+      if (behavioralAlert) newAlerts.push(behavioralAlert);
+      
+      // Peer comparison
+      const peerAlert = detectPeerAnomaly(txn, memberProfiles, profile);
+      if (peerAlert) newAlerts.push(peerAlert);
     });
 
     const allTransactions = [...newTransactions, ...transactions].sort(
@@ -92,15 +123,72 @@ export const useFraudStore = create<FraudStore>((set, get) => ({
     );
     const stats = calculateDashboardStats(allTransactions, allAlerts);
 
+    // Update member profiles
+    const updatedProfiles = memberProfiles.map(profile => {
+      const memberTxns = allTransactions.filter(t => t.member_id === profile.member_id);
+      if (memberTxns.length > 0) {
+        const amounts = memberTxns.map(t => t.amount);
+        const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const variance = amounts.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / amounts.length;
+        return {
+          ...profile,
+          avg_transaction_amount: mean,
+          std_transaction_amount: Math.sqrt(variance),
+          transaction_count: memberTxns.length,
+          risk_score: calculateRiskScore(profile.member_id, allTransactions, allAlerts),
+        };
+      }
+      return profile;
+    });
+
     set({
       transactions: allTransactions,
       alerts: allAlerts,
+      stats,
+      memberProfiles: updatedProfiles,
+    });
+  },
+
+  addHistoricalData: (historicalTransactions: Transaction[]) => {
+    const { transactions, memberProfiles, alerts } = get();
+    
+    const allTransactions = [...transactions, ...historicalTransactions].sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    );
+    
+    // Rebuild member profiles with historical data
+    const memberIds = [...new Set(allTransactions.map(t => t.member_id))];
+    const updatedProfiles = memberIds.map(memberId => {
+      const memberTxns = allTransactions.filter(t => t.member_id === memberId);
+      const amounts = memberTxns.map(t => t.amount);
+      const mean = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+      const variance = amounts.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / amounts.length;
+      const hours = memberTxns.map(t => t.timestamp.getHours());
+      const typicalHours = [...new Set(hours)].sort((a, b) => 
+        hours.filter(h => h === b).length - hours.filter(h => h === a).length
+      ).slice(0, 9);
+      
+      return {
+        member_id: memberId,
+        avg_transaction_amount: mean,
+        std_transaction_amount: Math.sqrt(variance),
+        typical_transaction_hours: typicalHours,
+        transaction_count: memberTxns.length,
+        risk_score: calculateRiskScore(memberId, allTransactions, alerts),
+      };
+    });
+    
+    const stats = calculateDashboardStats(allTransactions, alerts);
+    
+    set({
+      transactions: allTransactions,
+      memberProfiles: updatedProfiles,
       stats,
     });
   },
 
   runFraudDetection: (transactionsToCheck: Transaction[]) => {
-    const { transactions, memberProfiles, alerts } = get();
+    const { transactions, memberProfiles, alerts, settings } = get();
     const newAlerts: Alert[] = [];
 
     transactionsToCheck.forEach(txn => {
@@ -118,6 +206,13 @@ export const useFraudStore = create<FraudStore>((set, get) => ({
 
       if (ruleAlert) newAlerts.push(ruleAlert);
       if (anomalyAlert) newAlerts.push(anomalyAlert);
+      
+      // Behavioral analysis if enabled
+      if (settings.behavioralAnalysisEnabled) {
+        const memberTransactions = transactions.filter(t => t.member_id === txn.member_id);
+        const behavioralAlert = detectBehavioralAnomaly(txn, profile, memberTransactions);
+        if (behavioralAlert) newAlerts.push(behavioralAlert);
+      }
     });
 
     if (newAlerts.length > 0) {
@@ -155,5 +250,15 @@ export const useFraudStore = create<FraudStore>((set, get) => ({
     const { transactions } = get();
     const stats = calculateDashboardStats(transactions, []);
     set({ alerts: [], stats });
+  },
+  
+  setLiveFeed: (config: Partial<LiveFeedConfig>) => {
+    const { liveFeed } = get();
+    set({ liveFeed: { ...liveFeed, ...config } });
+  },
+  
+  updateSettings: (newSettings: Partial<DetectionSettings>) => {
+    const { settings } = get();
+    set({ settings: { ...settings, ...newSettings } });
   },
 }));

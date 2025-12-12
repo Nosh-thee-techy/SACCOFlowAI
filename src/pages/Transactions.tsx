@@ -1,11 +1,14 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useFraudStore } from '@/lib/store';
 import { parseCSV } from '@/lib/fraudDetection';
+import { generateHistoricalTransactions } from '@/lib/liveFeedSimulator';
+import { useLiveFeed } from '@/hooks/useLiveFeed';
 import { Transaction } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -29,21 +32,30 @@ import {
   ArrowDown,
   FileSpreadsheet,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  History,
+  PlusCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { ManualEntryForm } from '@/components/transactions/ManualEntryForm';
+import { LiveFeedControl } from '@/components/transactions/LiveFeedControl';
+import { exportTransactionsToCSV, exportTransactionsToPDF } from '@/lib/exportUtils';
 
 type SortField = 'timestamp' | 'amount' | 'member_id';
 type SortDirection = 'asc' | 'desc';
 
 export default function Transactions() {
-  const { transactions, addTransactions, runFraudDetection } = useFraudStore();
+  const { transactions, addTransactions, runFraudDetection, addHistoricalData, liveFeed, setLiveFeed } = useFraudStore();
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('timestamp');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState('feed');
+
+  // Live feed hook
+  useLiveFeed(liveFeed.enabled, liveFeed.intervalMs);
 
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -76,10 +88,45 @@ export default function Transactions() {
     }
   }, [addTransactions, runFraudDetection]);
 
+  const handleHistoryUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    
+    try {
+      const text = await file.text();
+      const parsed = parseCSV(text);
+      
+      if (parsed.length === 0) {
+        toast.error('No valid transactions found in the file');
+        return;
+      }
+
+      addHistoricalData(parsed);
+      
+      toast.success(`Loaded ${parsed.length} historical transactions`, {
+        description: 'Member behavioral baselines updated',
+      });
+    } catch (error) {
+      toast.error('Failed to parse CSV file');
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
+  }, [addHistoricalData]);
+
+  const handleGenerateHistory = () => {
+    const historicalData = generateHistoricalTransactions(500);
+    addHistoricalData(historicalData);
+    toast.success('Generated 500 historical transactions', {
+      description: 'Member behavioral baselines built',
+    });
+  };
+
   const filteredTransactions = useMemo(() => {
     let result = [...transactions];
 
-    // Search filter
     if (search) {
       const searchLower = search.toLowerCase();
       result = result.filter(
@@ -89,12 +136,10 @@ export default function Transactions() {
       );
     }
 
-    // Type filter
     if (typeFilter !== 'all') {
       result = result.filter((t) => t.transaction_type === typeFilter);
     }
 
-    // Sort
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
@@ -125,25 +170,16 @@ export default function Transactions() {
 
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === 'asc' ? (
-      <ArrowUp className="h-4 w-4" />
-    ) : (
-      <ArrowDown className="h-4 w-4" />
-    );
+    return sortDirection === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
   };
 
   const getTypeColor = (type: Transaction['transaction_type']) => {
     switch (type) {
-      case 'deposit':
-        return 'success';
-      case 'withdrawal':
-        return 'warning';
-      case 'transfer':
-        return 'info';
-      case 'loan_disbursement':
-        return 'secondary';
-      case 'loan_repayment':
-        return 'default';
+      case 'deposit': return 'success';
+      case 'withdrawal': return 'warning';
+      case 'transfer': return 'info';
+      case 'loan_disbursement': return 'secondary';
+      case 'loan_repayment': return 'default';
     }
   };
 
@@ -152,48 +188,105 @@ export default function Transactions() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Transaction Feed
-          </h1>
-          <p className="text-muted-foreground">
-            View and upload SACCO transactions for fraud analysis
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Transaction Feed</h1>
+          <p className="text-muted-foreground">Ingest and monitor SACCO transactions in real-time</p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Button variant="gradient" disabled={isUploading} asChild>
-              <span>
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                Upload CSV
-              </span>
-            </Button>
-          </label>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => { exportTransactionsToCSV(transactions); toast.success('Exported to CSV'); }}>
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => { exportTransactionsToPDF(transactions); toast.success('Exported to PDF'); }}>
+            PDF
+          </Button>
         </div>
       </div>
 
-      {/* CSV Format Info */}
-      <Card variant="glass" className="border-dashed">
-        <CardContent className="flex items-center gap-4 py-4">
-          <FileSpreadsheet className="h-8 w-8 text-primary" />
-          <div className="flex-1">
-            <p className="font-medium">CSV Format</p>
-            <p className="text-sm text-muted-foreground">
-              Required columns: transaction_id, member_id, amount, timestamp, transaction_type, account_balance
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Live Feed Control */}
+      <LiveFeedControl
+        enabled={liveFeed.enabled}
+        intervalMs={liveFeed.intervalMs}
+        onToggle={() => setLiveFeed({ enabled: !liveFeed.enabled })}
+        onIntervalChange={(ms) => setLiveFeed({ intervalMs: ms })}
+      />
+
+      {/* Ingestion Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="feed" className="gap-2">
+            <FileSpreadsheet className="h-4 w-4" />
+            CSV Upload
+          </TabsTrigger>
+          <TabsTrigger value="manual" className="gap-2">
+            <PlusCircle className="h-4 w-4" />
+            Manual Entry
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="h-4 w-4" />
+            Historical Data
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="feed" className="space-y-4">
+          <Card variant="glass" className="border-dashed">
+            <CardContent className="flex items-center gap-4 py-4">
+              <FileSpreadsheet className="h-8 w-8 text-primary" />
+              <div className="flex-1">
+                <p className="font-medium">CSV Upload</p>
+                <p className="text-sm text-muted-foreground">
+                  Required: transaction_id, member_id, amount, timestamp, transaction_type, account_balance
+                </p>
+              </div>
+              <label className="cursor-pointer">
+                <input type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+                <Button variant="gradient" disabled={isUploading} asChild>
+                  <span>
+                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    Upload CSV
+                  </span>
+                </Button>
+              </label>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="manual">
+          <ManualEntryForm />
+        </TabsContent>
+        
+        <TabsContent value="history" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <History className="h-5 w-5 text-primary" />
+                Pattern History
+              </CardTitle>
+              <CardDescription>
+                Upload historical transaction data to build behavioral baselines and improve anomaly detection
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <label className="cursor-pointer flex-1">
+                  <input type="file" accept=".csv" onChange={handleHistoryUpload} className="hidden" />
+                  <Button variant="outline" className="w-full" disabled={isUploading} asChild>
+                    <span>
+                      {isUploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                      Upload Historical CSV
+                    </span>
+                  </Button>
+                </label>
+                <Button variant="secondary" onClick={handleGenerateHistory} className="flex-1">
+                  Generate Demo History (500 txns)
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Historical data helps the system learn normal behavior patterns for each member,
+                enabling more accurate behavioral anomaly detection.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Filters */}
       <Card>
@@ -230,7 +323,7 @@ export default function Transactions() {
         <CardHeader>
           <CardTitle className="text-lg">Transactions</CardTitle>
           <CardDescription>
-            Showing {filteredTransactions.length} of {transactions.length} transactions
+            Showing {Math.min(50, filteredTransactions.length)} of {transactions.length} transactions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,32 +333,20 @@ export default function Transactions() {
                 <TableRow>
                   <TableHead className="w-[150px]">Transaction ID</TableHead>
                   <TableHead>
-                    <button
-                      onClick={() => handleSort('member_id')}
-                      className="flex items-center gap-2 hover:text-foreground"
-                    >
-                      Member ID
-                      {getSortIcon('member_id')}
+                    <button onClick={() => handleSort('member_id')} className="flex items-center gap-2 hover:text-foreground">
+                      Member ID {getSortIcon('member_id')}
                     </button>
                   </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead className="text-right">
-                    <button
-                      onClick={() => handleSort('amount')}
-                      className="flex items-center gap-2 ml-auto hover:text-foreground"
-                    >
-                      Amount
-                      {getSortIcon('amount')}
+                    <button onClick={() => handleSort('amount')} className="flex items-center gap-2 ml-auto hover:text-foreground">
+                      Amount {getSortIcon('amount')}
                     </button>
                   </TableHead>
                   <TableHead className="text-right">Balance</TableHead>
                   <TableHead>
-                    <button
-                      onClick={() => handleSort('timestamp')}
-                      className="flex items-center gap-2 hover:text-foreground"
-                    >
-                      Timestamp
-                      {getSortIcon('timestamp')}
+                    <button onClick={() => handleSort('timestamp')} className="flex items-center gap-2 hover:text-foreground">
+                      Timestamp {getSortIcon('timestamp')}
                     </button>
                   </TableHead>
                 </TableRow>
@@ -283,9 +364,7 @@ export default function Transactions() {
                 ) : (
                   filteredTransactions.slice(0, 50).map((txn) => (
                     <TableRow key={txn.transaction_id} className="group">
-                      <TableCell className="font-mono text-sm">
-                        {txn.transaction_id}
-                      </TableCell>
+                      <TableCell className="font-mono text-sm">{txn.transaction_id}</TableCell>
                       <TableCell className="font-medium">{txn.member_id}</TableCell>
                       <TableCell>
                         <Badge variant={getTypeColor(txn.transaction_type)}>
@@ -297,8 +376,7 @@ export default function Transactions() {
                         txn.transaction_type === 'withdrawal' && "text-warning",
                         txn.transaction_type === 'deposit' && "text-success",
                       )}>
-                        {txn.transaction_type === 'withdrawal' ? '-' : '+'}
-                        KES {txn.amount.toLocaleString()}
+                        {txn.transaction_type === 'withdrawal' ? '-' : '+'}KES {txn.amount.toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right font-mono text-muted-foreground">
                         KES {txn.account_balance.toLocaleString()}

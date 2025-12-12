@@ -9,7 +9,7 @@ export interface Transaction {
 
 export interface Alert {
   id: string;
-  type: 'rule' | 'anomaly';
+  type: 'rule' | 'anomaly' | 'behavioral';
   member_id: string;
   transaction_id: string;
   reason: string;
@@ -18,6 +18,22 @@ export interface Alert {
   timestamp: Date;
   reviewed: boolean;
   rule_type?: string;
+}
+
+export interface LiveFeedConfig {
+  enabled: boolean;
+  intervalMs: number;
+}
+
+export interface DetectionSettings {
+  largeTransactionThreshold: number;
+  businessHoursStart: number;
+  businessHoursEnd: number;
+  rapidWithdrawalCount: number;
+  zScoreThreshold: number;
+  minTransactionHistory: number;
+  volumeSpikeEnabled: boolean;
+  behavioralAnalysisEnabled: boolean;
 }
 
 export interface MemberProfile {
