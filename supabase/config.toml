@@ -52,3 +52,9 @@ verify_jwt = false
 
 [functions.ai-assistant]
 verify_jwt = false
+
+[functions.sim-swap-check]
+verify_jwt = false
+
+[functions.deepfake-verify]
+verify_jwt = false
