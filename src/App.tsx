@@ -11,6 +11,7 @@ import Transactions from "./pages/Transactions";
 import Alerts from "./pages/Alerts";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import TellerDashboard from "./pages/TellerDashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
@@ -52,6 +53,11 @@ const App = () => (
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/teller" element={
+                <ProtectedRoute allowedRoles={['teller', 'branch_manager', 'admin']}>
+                  <TellerDashboard />
+                </ProtectedRoute>
+              } />
               <Route path="/settings" element={
                 <ProtectedRoute allowedRoles={['admin', 'risk_officer']}>
                   <Settings />

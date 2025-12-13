@@ -12,7 +12,8 @@ import {
   LogOut,
   User,
   ChevronDown,
-  BarChart3
+  BarChart3,
+  UserCog
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFraudStore } from '@/lib/store';
@@ -62,6 +63,7 @@ export function Navbar() {
   // Filter nav items based on role
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard, minRole: null },
+    { path: '/teller', label: 'Teller', icon: UserCog, minRole: 'teller' as const },
     { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft, minRole: null },
     { path: '/alerts', label: 'Alerts', icon: AlertTriangle, minRole: null },
     { path: '/analytics', label: 'Analytics', icon: BarChart3, minRole: null },
