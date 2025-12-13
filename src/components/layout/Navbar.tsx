@@ -13,7 +13,10 @@ import {
   User,
   ChevronDown,
   BarChart3,
-  UserCog
+  UserCog,
+  CheckSquare,
+  FileSearch,
+  MessageSquareWarning
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFraudStore } from '@/lib/store';
@@ -33,7 +36,7 @@ import { Badge } from '@/components/ui/badge';
 const getRoleLabel = (role: string | null) => {
   switch (role) {
     case 'admin': return 'Admin';
-    case 'branch_manager': return 'Branch Manager';
+    case 'branch_manager': return 'Manager';
     case 'teller': return 'Teller';
     case 'risk_officer': return 'Risk Officer';
     case 'auditor': return 'Auditor';
@@ -55,22 +58,24 @@ const getRoleBadgeVariant = (role: string | null) => {
 export function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme, stats } = useFraudStore();
-  const { user, role, signOut, hasRole } = useAuth();
+  const { user, role, signOut, hasRole, canAccess } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const unreviewed = stats.totalAlerts - stats.reviewedAlerts;
 
   // Filter nav items based on role
   const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard, minRole: null },
-    { path: '/teller', label: 'Teller', icon: UserCog, minRole: 'teller' as const },
-    { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft, minRole: null },
-    { path: '/alerts', label: 'Alerts', icon: AlertTriangle, minRole: null },
-    { path: '/analytics', label: 'Analytics', icon: BarChart3, minRole: null },
-    { path: '/settings', label: 'Settings', icon: Settings, minRole: 'risk_officer' as const },
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
+    { path: '/teller', label: 'Enter', icon: UserCog, roles: ['teller', 'branch_manager', 'admin'] as const },
+    { path: '/approvals', label: 'Approve', icon: CheckSquare, roles: ['branch_manager', 'admin'] as const },
+    { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft, roles: null },
+    { path: '/alerts', label: 'Alerts', icon: AlertTriangle, roles: null },
+    { path: '/audit', label: 'Audit', icon: FileSearch, roles: ['auditor', 'admin', 'risk_officer', 'branch_manager'] as const },
+    { path: '/analytics', label: 'Analytics', icon: BarChart3, roles: null },
+    { path: '/settings', label: 'Settings', icon: Settings, roles: ['admin', 'risk_officer'] as const },
   ].filter(item => {
-    if (!item.minRole) return true;
-    return hasRole(item.minRole);
+    if (!item.roles) return true;
+    return canAccess(item.roles as any);
   });
 
   const handleSignOut = async () => {

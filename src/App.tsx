@@ -12,6 +12,9 @@ import Alerts from "./pages/Alerts";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import TellerDashboard from "./pages/TellerDashboard";
+import PendingApprovals from "./pages/PendingApprovals";
+import AuditPanel from "./pages/AuditPanel";
+import Whistleblower from "./pages/Whistleblower";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
@@ -43,6 +46,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/report" element={<Whistleblower />} />
             
             <Route element={
               <ProtectedRoute>
@@ -56,6 +60,16 @@ const App = () => (
               <Route path="/teller" element={
                 <ProtectedRoute allowedRoles={['teller', 'branch_manager', 'admin']}>
                   <TellerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/approvals" element={
+                <ProtectedRoute allowedRoles={['branch_manager', 'admin']}>
+                  <PendingApprovals />
+                </ProtectedRoute>
+              } />
+              <Route path="/audit" element={
+                <ProtectedRoute allowedRoles={['auditor', 'admin', 'risk_officer', 'branch_manager']}>
+                  <AuditPanel />
                 </ProtectedRoute>
               } />
               <Route path="/settings" element={
