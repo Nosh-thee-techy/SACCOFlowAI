@@ -39,6 +39,10 @@ export default function AuditPanel() {
     total_entries: number;
   } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [cases, setCases] = useState<any[]>([
+    { id: 'CASE-001', title: 'Suspicious withdrawal pattern', status: 'investigating', priority: 'high', created_at: new Date().toISOString() },
+    { id: 'CASE-002', title: 'Potential SIM-swap fraud', status: 'open', priority: 'critical', created_at: new Date().toISOString() },
+  ]);
 
   useEffect(() => {
     fetchAuditLogs();
@@ -135,11 +139,7 @@ export default function AuditPanel() {
     );
   }
 
-  // Case management state
-  const [cases, setCases] = useState<any[]>([
-    { id: 'CASE-001', title: 'Suspicious withdrawal pattern', status: 'investigating', priority: 'high', created_at: new Date().toISOString() },
-    { id: 'CASE-002', title: 'Potential SIM-swap fraud', status: 'open', priority: 'critical', created_at: new Date().toISOString() },
-  ]);
+  // Case management data is now initialized with other state hooks above
 
   const handleExportCSV = () => {
     exportToCSV(logs.map(log => ({
