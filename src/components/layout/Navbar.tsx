@@ -67,12 +67,12 @@ export function Navbar() {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
     { path: '/teller', label: 'Enter', icon: UserCog, roles: ['teller', 'branch_manager', 'admin'] as const },
-    { path: '/approvals', label: 'Approve', icon: CheckSquare, roles: ['branch_manager', 'admin'] as const },
+    { path: '/branch', label: 'Branch', icon: CheckSquare, roles: ['branch_manager', 'admin'] as const },
+    { path: '/admin', label: 'Admin', icon: Settings, roles: ['admin'] as const },
     { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft, roles: null },
     { path: '/alerts', label: 'Alerts', icon: AlertTriangle, roles: null },
     { path: '/audit', label: 'Audit', icon: FileSearch, roles: ['auditor', 'admin', 'risk_officer', 'branch_manager'] as const },
     { path: '/analytics', label: 'Analytics', icon: BarChart3, roles: null },
-    { path: '/settings', label: 'Settings', icon: Settings, roles: ['admin', 'risk_officer'] as const },
   ].filter(item => {
     if (!item.roles) return true;
     return canAccess(item.roles as any);
