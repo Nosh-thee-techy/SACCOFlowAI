@@ -86,25 +86,27 @@ export default function Alerts() {
         : 'low';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header with security branding */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <ShieldAlert className="h-6 w-6 text-primary" />
+            <div className="rounded-xl gradient-intelligence p-2 shadow-glow-intelligence">
+              <ShieldAlert className="h-5 w-5 text-white" />
+            </div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Alert Centre
+              Alert Center
             </h1>
           </div>
-          <p className="text-muted-foreground">
-            Review and manage fraud detection alerts
+          <p className="text-muted-foreground mt-1">
+            Review security alerts flagged by our AI detection system
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => { exportAlertsToCSV(alerts); toast.success('Exported to CSV'); }}>
+          <Button variant="outline" size="sm" className="btn-scale" onClick={() => { exportAlertsToCSV(alerts); toast.success('Exported to CSV'); }}>
             <FileDown className="h-4 w-4 mr-1" /> CSV
           </Button>
-          <Button variant="outline" size="sm" onClick={() => { exportAlertsToPDF(alerts); toast.success('Exported to PDF'); }}>
+          <Button variant="outline" size="sm" className="btn-scale" onClick={() => { exportAlertsToPDF(alerts); toast.success('Exported to PDF'); }}>
             <FileText className="h-4 w-4 mr-1" /> PDF
           </Button>
         </div>
@@ -112,56 +114,56 @@ export default function Alerts() {
 
       {/* Risk Overview Banner */}
       <Card className={cn(
-        "relative overflow-hidden border-2 transition-all duration-300",
+        "relative overflow-hidden border-2 transition-all duration-300 card-interactive",
         riskLevel === 'critical' && "border-destructive/50 bg-destructive/5",
         riskLevel === 'high' && "border-warning/50 bg-warning/5",
-        riskLevel === 'medium' && "border-chart-5/50 bg-chart-5/5",
+        riskLevel === 'medium' && "border-intelligence/50 bg-intelligence/5",
         riskLevel === 'low' && "border-success/50 bg-success/5"
       )}>
-        <CardContent className="p-4">
+        <CardContent className="p-5">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <div className={cn(
-                "flex h-12 w-12 items-center justify-center rounded-xl",
+                "flex h-14 w-14 items-center justify-center rounded-2xl transition-transform hover:scale-105",
                 riskLevel === 'critical' && "bg-destructive/10 text-destructive",
                 riskLevel === 'high' && "bg-warning/10 text-warning",
-                riskLevel === 'medium' && "bg-chart-5/10 text-chart-5",
+                riskLevel === 'medium' && "bg-intelligence/10 text-intelligence",
                 riskLevel === 'low' && "bg-success/10 text-success"
               )}>
-                {riskLevel === 'critical' ? <ShieldAlert className="h-6 w-6" /> :
-                 riskLevel === 'high' ? <AlertTriangle className="h-6 w-6" /> :
-                 riskLevel === 'low' ? <Shield className="h-6 w-6" /> :
-                 <Bell className="h-6 w-6" />}
+                {riskLevel === 'critical' ? <ShieldAlert className="h-7 w-7" /> :
+                 riskLevel === 'high' ? <AlertTriangle className="h-7 w-7" /> :
+                 riskLevel === 'low' ? <Shield className="h-7 w-7" /> :
+                 <Bell className="h-7 w-7" />}
               </div>
               <div>
                 <p className={cn(
-                  "text-lg font-semibold capitalize",
+                  "text-xl font-bold capitalize",
                   riskLevel === 'critical' && "text-destructive",
                   riskLevel === 'high' && "text-warning",
-                  riskLevel === 'medium' && "text-chart-5",
+                  riskLevel === 'medium' && "text-intelligence",
                   riskLevel === 'low' && "text-success"
                 )}>
-                  {riskLevel === 'low' ? 'All Clear' : `${riskLevel} Risk Level`}
+                  {riskLevel === 'low' ? 'All Systems Normal' : `${riskLevel} Risk Detected`}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {pendingAlerts.length === 0 
-                    ? 'No pending alerts - all transactions normal'
-                    : `${pendingAlerts.length} alert${pendingAlerts.length > 1 ? 's' : ''} requiring attention`
+                    ? 'No unusual activity detected - your SACCO is secure'
+                    : `${pendingAlerts.length} alert${pendingAlerts.length > 1 ? 's' : ''} need your attention`
                   }
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
               {criticalCount > 0 && (
-                <div className="flex items-center gap-1 text-destructive">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive">
                   <AlertTriangle className="h-4 w-4" />
-                  <span className="font-semibold">{criticalCount}</span> critical
+                  <span className="font-bold">{criticalCount}</span> critical
                 </div>
               )}
               {highCount > 0 && (
-                <div className="flex items-center gap-1 text-warning">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-warning/10 text-warning">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="font-semibold">{highCount}</span> high
+                  <span className="font-bold">{highCount}</span> high priority
                 </div>
               )}
             </div>

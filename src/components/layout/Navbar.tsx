@@ -83,16 +83,16 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 hover-lift">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-glow">
-            <Shield className="h-5 w-5 text-primary-foreground" />
+            <Shield className="h-5 w-5 text-white" />
           </div>
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold tracking-tight">SACCO Flow AI</h1>
-            <p className="text-xs text-muted-foreground">Intelligent Protection</p>
+            <p className="text-xs text-muted-foreground">Trust • Intelligence • Safety</p>
           </div>
         </Link>
 
