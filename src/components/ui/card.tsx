@@ -3,16 +3,17 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'glass' | 'gradient' | 'stat';
+  variant?: 'default' | 'glass' | 'gradient' | 'stat' | 'interactive';
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', ...props }, ref) => {
     const variants = {
-      default: "rounded-xl border bg-card text-card-foreground shadow-sm",
-      glass: "rounded-xl glass text-card-foreground",
+      default: "rounded-xl border border-border/50 bg-card text-card-foreground shadow-soft transition-all duration-300",
+      glass: "rounded-xl glass text-card-foreground backdrop-blur-xl",
       gradient: "rounded-xl gradient-card border border-border/50 text-card-foreground shadow-md",
       stat: "stat-card bg-card border border-border/50 text-card-foreground",
+      interactive: "rounded-xl border border-border/50 bg-card text-card-foreground shadow-soft transition-all duration-300 hover:shadow-lifted hover:-translate-y-0.5 cursor-pointer",
     };
 
     return (
@@ -35,7 +36,7 @@ CardHeader.displayName = "CardHeader";
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-2xl font-semibold leading-none tracking-tight", className)} {...props} />
+    <h3 ref={ref} className={cn("text-xl font-semibold leading-none tracking-tight", className)} {...props} />
   ),
 );
 CardTitle.displayName = "CardTitle";
