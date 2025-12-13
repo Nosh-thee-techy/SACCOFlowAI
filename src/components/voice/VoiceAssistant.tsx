@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useConversation } from '@elevenlabs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Mic, MicOff, Phone, PhoneOff, Volume2, 
@@ -17,21 +17,55 @@ interface Message {
   timestamp: Date;
 }
 
-// You need to get an ElevenLabs agent ID from their dashboard
-// For demo purposes, we'll prompt the user if not configured
-const DEFAULT_AGENT_ID = '';
-
 export function VoiceAssistant() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [agentId, setAgentId] = useState(DEFAULT_AGENT_ID);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const conversationRef = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const conversation = useConversation({
+    onConnect: () => {
+      console.log('Connected to ElevenLabs agent');
+      toast.success('Voice assistant connected!');
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "Hello! I'm your fraud detection assistant. I can help you understand flagged transactions, explain AI alerts, and guide you through the review process. How can I help you today?",
+        timestamp: new Date()
+      }]);
+    },
+    onDisconnect: () => {
+      console.log('Disconnected from ElevenLabs agent');
+      toast.info('Voice assistant disconnected');
+    },
+    onMessage: (message: any) => {
+      console.log('Received message:', message);
+      if (message.type === 'user_transcript') {
+        const transcript = message.user_transcription_event?.user_transcript;
+        if (transcript) {
+          setMessages(prev => [...prev, {
+            role: 'user',
+            content: transcript,
+            timestamp: new Date()
+          }]);
+        }
+      } else if (message.type === 'agent_response') {
+        const response = message.agent_response_event?.agent_response;
+        if (response) {
+          setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: response,
+            timestamp: new Date()
+          }]);
+        }
+      }
+    },
+    onError: (error) => {
+      console.error('ElevenLabs error:', error);
+      toast.error('Voice assistant error', {
+        description: 'Please try reconnecting'
+      });
+    },
+  });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,19 +74,6 @@ export function VoiceAssistant() {
   }, [messages]);
 
   const startConversation = useCallback(async () => {
-    if (!agentId) {
-      const id = prompt('Please enter your ElevenLabs Agent ID:');
-      if (!id) {
-        toast.error('Agent ID is required to use voice assistant');
-        return;
-      }
-      setAgentId(id);
-      return startConversationWithId(id);
-    }
-    return startConversationWithId(agentId);
-  }, [agentId]);
-
-  const startConversationWithId = async (id: string) => {
     setIsConnecting(true);
     
     try {
@@ -60,26 +81,24 @@ export function VoiceAssistant() {
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Get signed URL from edge function
-      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation-token', {
-        body: { agentId: id }
-      });
+      const { data, error } = await supabase.functions.invoke('elevenlabs-conversation-token');
 
-      if (error || !data?.signed_url) {
-        throw new Error(error?.message || 'Failed to get conversation token');
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to get conversation token');
       }
 
-      // For now, we'll show a message since the full ElevenLabs SDK integration 
-      // requires the @elevenlabs/react package
-      toast.success('Voice assistant ready!', {
-        description: 'ElevenLabs connection established'
-      });
+      if (!data?.signed_url) {
+        console.error('No signed_url in response:', data);
+        throw new Error('Failed to get conversation token - no signed URL received');
+      }
+
+      console.log('Starting conversation with signed URL');
       
-      setIsConnected(true);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: "Hello! I'm your fraud detection assistant. I can help you understand flagged transactions, explain AI alerts, and guide you through the review process. How can I help you today?",
-        timestamp: new Date()
-      }]);
+      // Start the conversation with WebSocket using signed URL
+      await conversation.startSession({
+        signedUrl: data.signed_url,
+      });
 
     } catch (error) {
       console.error('Failed to start conversation:', error);
@@ -89,17 +108,14 @@ export function VoiceAssistant() {
     } finally {
       setIsConnecting(false);
     }
-  };
+  }, [conversation]);
 
-  const endConversation = useCallback(() => {
-    setIsConnected(false);
-    setIsSpeaking(false);
-    toast.info('Voice assistant disconnected');
-  }, []);
+  const endConversation = useCallback(async () => {
+    await conversation.endSession();
+  }, [conversation]);
 
-  const addMessage = (role: 'user' | 'assistant', content: string) => {
-    setMessages(prev => [...prev, { role, content, timestamp: new Date() }]);
-  };
+  const isConnected = conversation.status === 'connected';
+  const isSpeaking = conversation.isSpeaking;
 
   if (!isOpen) {
     return (
@@ -232,9 +248,12 @@ export function VoiceAssistant() {
                 
                 <Button
                   size="icon"
-                  className="h-14 w-14 rounded-full bg-gradient-to-r from-intelligence to-primary hover:opacity-90 shadow-glow-intelligence"
+                  className={cn(
+                    "h-14 w-14 rounded-full bg-gradient-to-r from-intelligence to-primary hover:opacity-90 shadow-glow-intelligence",
+                    !isSpeaking && "animate-pulse"
+                  )}
                 >
-                  <Mic className="h-6 w-6" />
+                  {isSpeaking ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
                 </Button>
                 
                 <Button
