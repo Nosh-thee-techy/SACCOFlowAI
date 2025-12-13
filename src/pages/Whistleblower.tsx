@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { 
-  Shield, Send, CheckCircle2, AlertTriangle, Lock, Eye, EyeOff
+  Shield, Send, CheckCircle2, AlertTriangle, Lock, Eye, EyeOff, Heart, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -27,7 +27,6 @@ export default function Whistleblower() {
     e.preventDefault();
     
     try {
-      // Validate input
       reportSchema.parse({ subject, description });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -70,25 +69,35 @@ export default function Whistleblower() {
 
   if (submitted) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Card className="max-w-md w-full text-center">
-          <CardContent className="pt-8 pb-8">
-            <div className="rounded-full bg-green-500/10 p-4 w-fit mx-auto mb-6">
-              <CheckCircle2 className="h-12 w-12 text-green-500" />
+      <div className="min-h-[80vh] flex items-center justify-center p-4">
+        <Card className="max-w-md w-full text-center border-human/20 overflow-hidden animate-scale-in">
+          {/* Success header with gradient */}
+          <div className="gradient-empathy p-8">
+            <div className="rounded-full bg-white/20 p-4 w-fit mx-auto mb-4">
+              <CheckCircle2 className="h-12 w-12 text-white" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Report Submitted</h2>
+            <h2 className="text-2xl font-bold text-white mb-1">Thank You</h2>
+            <p className="text-white/80">Your voice matters</p>
+          </div>
+          
+          <CardContent className="pt-6 pb-8">
             <p className="text-muted-foreground mb-6">
-              Your report has been submitted anonymously. Thank you for helping maintain integrity.
+              Your report has been submitted anonymously. Thank you for helping protect our community.
             </p>
-            <div className="p-4 rounded-lg bg-muted mb-6">
-              <p className="text-sm text-muted-foreground">Reference Number</p>
-              <p className="font-mono text-lg">{reportId.slice(0, 8).toUpperCase()}</p>
+            <div className="p-4 rounded-xl bg-human/5 border border-human/10 mb-6">
+              <p className="text-sm text-muted-foreground mb-1">Your Reference Number</p>
+              <p className="font-mono text-xl font-semibold text-human">{reportId.slice(0, 8).toUpperCase()}</p>
+              <p className="text-xs text-muted-foreground mt-2">Save this if you need to follow up</p>
             </div>
-            <div className="flex items-start gap-2 text-left p-4 rounded-lg bg-primary/5 border border-primary/10">
-              <Lock className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-muted-foreground">
-                Your identity has not been recorded. Only authorized personnel can view this report.
-              </p>
+            <div className="flex items-start gap-3 text-left p-4 rounded-xl bg-muted">
+              <Lock className="h-5 w-5 text-human mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium mb-1">Your identity is protected</p>
+                <p className="text-xs text-muted-foreground">
+                  We have not recorded your name, IP address, or any identifying information. 
+                  Only authorized investigators can view this report.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -97,128 +106,195 @@ export default function Whistleblower() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="space-y-1 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <Shield className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Report a Concern</h1>
+    <div className="min-h-screen py-8 px-4">
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Hero header with empathy gradient */}
+        <div className="text-center space-y-4 py-8">
+          <div className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-human/10 text-human text-sm font-medium mb-2">
+            <Heart className="h-4 w-4" />
+            Safe & Confidential
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+            Your Voice <span className="text-gradient-human">Matters</span>
+          </h1>
+          <p className="text-muted-foreground max-w-md mx-auto text-lg">
+            Report fraud or misconduct safely. We're here to listen and protect.
+          </p>
         </div>
-        <p className="text-muted-foreground">
-          Submit a confidential report about fraud or misconduct
-        </p>
-      </div>
 
-      {/* Privacy Notice */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-primary/10 p-3 flex-shrink-0">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold mb-1">Your Privacy is Protected</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• No login required - your identity is not recorded</li>
-                <li>• Reports are encrypted and stored securely</li>
-                <li>• Only authorized investigators can view reports</li>
-                <li>• Your IP address is not logged</li>
-              </ul>
+        {/* Privacy assurance card */}
+        <Card className="safe-zone overflow-hidden animate-fade-in">
+          <div className="safe-zone-header">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-white/20 p-2">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">You Are Protected</h3>
+                <p className="text-white/80 text-sm">Your safety is our priority</p>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Report Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Submit Your Report</CardTitle>
-          <CardDescription>
-            Provide as much detail as possible to help with the investigation
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
-              <Input
-                id="subject"
-                placeholder="Brief summary of your concern"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                maxLength={200}
-              />
-              <p className="text-xs text-muted-foreground text-right">
-                {subject.length}/200
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Details</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe what happened, when, where, and who was involved. Include any evidence or documents you're aware of."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={8}
-                maxLength={5000}
-              />
-              <p className="text-xs text-muted-foreground text-right">
-                {description.length}/5000
-              </p>
-            </div>
-
-            {/* Tips */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setShowDetails(!showDetails)}
-                className="flex items-center gap-2 text-sm text-primary hover:underline"
-              >
-                {showDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {showDetails ? 'Hide tips' : 'Show tips for effective reporting'}
-              </button>
-              
-              {showDetails && (
-                <div className="p-4 rounded-lg bg-muted text-sm space-y-2">
-                  <p className="font-medium">What to include:</p>
-                  <ul className="text-muted-foreground space-y-1">
-                    <li>• <strong>What:</strong> Describe the suspicious activity or misconduct</li>
-                    <li>• <strong>When:</strong> Dates and times if known</li>
-                    <li>• <strong>Who:</strong> People involved (names, roles, or descriptions)</li>
-                    <li>• <strong>Where:</strong> Location or branch where it occurred</li>
-                    <li>• <strong>Evidence:</strong> Any documents, transactions, or proof</li>
-                    <li>• <strong>Impact:</strong> How this affects members or the organization</li>
-                  </ul>
+          <CardContent className="pt-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-human/10 p-2 flex-shrink-0">
+                  <Lock className="h-4 w-4 text-human" />
                 </div>
-              )}
+                <div>
+                  <p className="font-medium text-sm">No Login Required</p>
+                  <p className="text-xs text-muted-foreground">Your identity stays hidden</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-human/10 p-2 flex-shrink-0">
+                  <Shield className="h-4 w-4 text-human" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Encrypted & Secure</p>
+                  <p className="text-xs text-muted-foreground">End-to-end protection</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-human/10 p-2 flex-shrink-0">
+                  <Eye className="h-4 w-4 text-human" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Restricted Access</p>
+                  <p className="text-xs text-muted-foreground">Only investigators can view</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="rounded-full bg-human/10 p-2 flex-shrink-0">
+                  <Users className="h-4 w-4 text-human" />
+                </div>
+                <div>
+                  <p className="font-medium text-sm">No IP Logging</p>
+                  <p className="text-xs text-muted-foreground">Complete anonymity</p>
+                </div>
+              </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <Button 
-              type="submit" 
-              disabled={submitting || !subject || !description}
-              className="w-full gap-2"
-            >
-              {submitting ? (
-                <>Submitting...</>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Submit Anonymous Report
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        {/* Report Form */}
+        <Card className="card-interactive animate-fade-in">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-human" />
+              Share Your Concern
+            </CardTitle>
+            <CardDescription>
+              Tell us what you've observed. Every detail helps.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="subject">What happened?</Label>
+                <Input
+                  id="subject"
+                  placeholder="Brief summary of your concern"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  maxLength={200}
+                  className="transition-all focus:ring-2 focus:ring-human/20"
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {subject.length}/200
+                </p>
+              </div>
 
-      {/* Warning */}
-      <div className="flex items-start gap-2 text-sm text-muted-foreground">
-        <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-        <p>
-          False reports made in bad faith may be subject to investigation. 
-          Please only submit genuine concerns about fraud or misconduct.
-        </p>
+              <div className="space-y-2">
+                <Label htmlFor="description">Tell us more</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Describe what you saw, when it happened, and who was involved. The more details, the better we can help."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={8}
+                  maxLength={5000}
+                  className="transition-all focus:ring-2 focus:ring-human/20"
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {description.length}/5000
+                </p>
+              </div>
+
+              {/* Tips section */}
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="flex items-center gap-2 text-sm text-human hover:underline transition-colors"
+                >
+                  {showDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showDetails ? 'Hide guidance' : 'Need help? See what to include'}
+                </button>
+                
+                {showDetails && (
+                  <div className="p-4 rounded-xl bg-human/5 border border-human/10 text-sm space-y-3 animate-fade-in">
+                    <p className="font-medium text-human">Helpful things to mention:</p>
+                    <ul className="text-muted-foreground space-y-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-human">•</span>
+                        <span><strong>What:</strong> What did you observe or experience?</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-human">•</span>
+                        <span><strong>When:</strong> When did this happen?</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-human">•</span>
+                        <span><strong>Who:</strong> Who was involved?</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-human">•</span>
+                        <span><strong>Where:</strong> Which location or branch?</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-human">•</span>
+                        <span><strong>Impact:</strong> How does this affect members?</span>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                type="submit" 
+                disabled={submitting || !subject || !description}
+                className="w-full gap-2 btn-scale bg-human hover:bg-human/90 text-human-foreground h-12 text-base"
+              >
+                {submitting ? (
+                  <>Submitting securely...</>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Submit Anonymous Report
+                  </>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Reassuring footer */}
+        <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground py-4">
+          <Heart className="h-4 w-4 text-human" />
+          <p>
+            Thank you for caring about our community's safety.
+          </p>
+        </div>
+
+        {/* Legal note */}
+        <div className="flex items-start gap-2 text-xs text-muted-foreground p-4 rounded-xl bg-muted/50">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <p>
+            Please only submit genuine concerns about fraud or misconduct. 
+            False reports made intentionally may be subject to review.
+          </p>
+        </div>
       </div>
     </div>
   );
