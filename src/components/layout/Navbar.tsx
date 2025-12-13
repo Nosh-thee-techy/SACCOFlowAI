@@ -1,9 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  LayoutDashboard, 
-  ArrowRightLeft, 
-  AlertTriangle, 
-  Settings, 
   Shield,
   Moon,
   Sun,
@@ -12,15 +8,15 @@ import {
   LogOut,
   User,
   ChevronDown,
-  BarChart3,
-  UserCog,
-  CheckSquare,
+  Home,
+  ClipboardCheck,
+  Settings,
   FileSearch,
-  MessageSquareWarning
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFraudStore } from '@/lib/store';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth, AppRole } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import {
@@ -35,8 +31,8 @@ import { Badge } from '@/components/ui/badge';
 
 const getRoleLabel = (role: string | null) => {
   switch (role) {
-    case 'admin': return 'Admin';
-    case 'branch_manager': return 'Manager';
+    case 'admin': return 'Administrator';
+    case 'branch_manager': return 'Branch Manager';
     case 'teller': return 'Teller';
     case 'risk_officer': return 'Risk Officer';
     case 'auditor': return 'Auditor';
@@ -55,28 +51,43 @@ const getRoleBadgeVariant = (role: string | null) => {
   }
 };
 
+// Role-specific navigation items
+const getNavItemsForRole = (role: AppRole | null) => {
+  switch (role) {
+    case 'teller':
+      return [
+        { path: '/teller', label: 'My Dashboard', icon: Home },
+      ];
+    case 'branch_manager':
+      return [
+        { path: '/branch', label: 'Branch Overview', icon: Home },
+        { path: '/pending-approvals', label: 'Pending Approvals', icon: ClipboardCheck },
+      ];
+    case 'admin':
+      return [
+        { path: '/admin', label: 'Admin Dashboard', icon: Home },
+        { path: '/settings', label: 'Settings', icon: Settings },
+      ];
+    case 'auditor':
+      return [
+        { path: '/audit', label: 'Audit Panel', icon: FileSearch },
+      ];
+    case 'risk_officer':
+      return [
+        { path: '/risk', label: 'Risk Dashboard', icon: AlertTriangle },
+      ];
+    default:
+      return [];
+  }
+};
+
 export function Navbar() {
   const location = useLocation();
   const { theme, toggleTheme, stats } = useFraudStore();
-  const { user, role, signOut, hasRole, canAccess } = useAuth();
+  const { user, role, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const unreviewed = stats.totalAlerts - stats.reviewedAlerts;
-
-  // Filter nav items based on role
-  const navItems = [
-    { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: null },
-    { path: '/teller', label: 'Enter', icon: UserCog, roles: ['teller', 'branch_manager', 'admin'] as const },
-    { path: '/branch', label: 'Branch', icon: CheckSquare, roles: ['branch_manager', 'admin'] as const },
-    { path: '/admin', label: 'Admin', icon: Settings, roles: ['admin'] as const },
-    { path: '/transactions', label: 'Transactions', icon: ArrowRightLeft, roles: null },
-    { path: '/alerts', label: 'Alerts', icon: AlertTriangle, roles: null },
-    { path: '/audit', label: 'Audit', icon: FileSearch, roles: ['auditor', 'admin', 'risk_officer', 'branch_manager'] as const },
-    { path: '/analytics', label: 'Analytics', icon: BarChart3, roles: null },
-  ].filter(item => {
-    if (!item.roles) return true;
-    return canAccess(item.roles as any);
-  });
+  const navItems = getNavItemsForRole(role);
 
   const handleSignOut = async () => {
     await signOut();
@@ -92,7 +103,7 @@ export function Navbar() {
           </div>
           <div className="hidden sm:block">
             <h1 className="text-lg font-bold tracking-tight">SACCO Flow AI</h1>
-            <p className="text-xs text-muted-foreground">Trust • Intelligence • Safety</p>
+            <p className="text-xs text-muted-foreground">{getRoleLabel(role)}</p>
           </div>
         </Link>
 
@@ -101,7 +112,6 @@ export function Navbar() {
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;
-            const showBadge = item.path === '/alerts' && unreviewed > 0;
 
             return (
               <Link
@@ -116,11 +126,6 @@ export function Navbar() {
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
-                {showBadge && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
-                    {unreviewed > 99 ? '99+' : unreviewed}
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -187,7 +192,6 @@ export function Navbar() {
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               const Icon = item.icon;
-              const showBadge = item.path === '/alerts' && unreviewed > 0;
 
               return (
                 <Link
@@ -203,11 +207,6 @@ export function Navbar() {
                 >
                   <Icon className="h-5 w-5" />
                   {item.label}
-                  {showBadge && (
-                    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
-                      {unreviewed}
-                    </span>
-                  )}
                 </Link>
               );
             })}
