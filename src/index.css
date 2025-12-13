@@ -423,6 +423,20 @@
     transform: scale(0.98);
   }
 
+  /* Float animation */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
   /* Whistleblower safe zone styling */
   .safe-zone {
     @apply rounded-2xl border-2 border-human/20 bg-human/5;

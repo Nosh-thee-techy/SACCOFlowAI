@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { VoiceAssistant } from "@/components/voice/VoiceAssistant";
+import LandingPage from "./pages/LandingPage";
 import TellerDashboard from "./pages/TellerDashboard";
 import PendingApprovals from "./pages/PendingApprovals";
 import BranchManagerDashboard from "./pages/BranchManagerDashboard";
@@ -69,6 +71,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/report" element={<Whistleblower />} />
             
@@ -76,6 +79,7 @@ const App = () => (
             <Route element={
               <ProtectedRoute>
                 <Layout />
+                <VoiceAssistant />
               </ProtectedRoute>
             }>
               {/* Role-specific dashboards - each role has ONE primary dashboard */}
@@ -129,8 +133,8 @@ const App = () => (
                 </ProtectedRoute>
               } />
 
-              {/* Default redirect based on role */}
-              <Route path="/" element={<RoleBasedRedirect />} />
+              {/* Dashboard redirect based on role */}
+              <Route path="/dashboard" element={<RoleBasedRedirect />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />
