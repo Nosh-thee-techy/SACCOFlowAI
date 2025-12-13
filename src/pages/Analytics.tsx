@@ -2,6 +2,7 @@ import { useFraudStore } from '@/lib/store';
 import { VolumeChart, HourlyChart, TrendChart } from '@/components/dashboard/Charts';
 import { MemberRiskTable } from '@/components/dashboard/MemberRiskTable';
 import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
+import { InteractiveMemberChart } from '@/components/charts/InteractiveMemberChart';
 import { generateVolumeChartData, generateHourlyData, generateMonthlyTrend, generateHeatmapData } from '@/lib/mockData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { 
@@ -9,36 +10,65 @@ import {
   Pie, 
   Cell, 
   ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
   Tooltip, 
-  Legend 
 } from 'recharts';
 
 export default function Analytics() {
-  const { stats, alerts, memberProfiles, transactions } = useFraudStore();
+  const { alerts, memberProfiles } = useFraudStore();
   
   const volumeData = generateVolumeChartData();
   const hourlyData = generateHourlyData();
   const trendData = generateMonthlyTrend();
   const heatmapData = generateHeatmapData();
   
-  // Alert type distribution
+  // Alert type distribution with friendly names
   const alertTypeData = [
-    { name: 'Rule-Based', value: alerts.filter(a => a.type === 'rule').length, color: 'hsl(var(--chart-1))' },
-    { name: 'Anomaly', value: alerts.filter(a => a.type === 'anomaly').length, color: 'hsl(var(--chart-2))' },
-    { name: 'Behavioral', value: alerts.filter(a => a.type === 'behavioral').length, color: 'hsl(var(--chart-3))' },
+    { 
+      name: 'Policy Checks', 
+      description: 'Transactions that broke our safety rules',
+      value: alerts.filter(a => a.type === 'rule').length, 
+      color: 'hsl(var(--chart-1))' 
+    },
+    { 
+      name: 'Unusual Patterns', 
+      description: 'Activity that looks different from normal',
+      value: alerts.filter(a => a.type === 'anomaly').length, 
+      color: 'hsl(var(--chart-2))' 
+    },
+    { 
+      name: 'Behavior Changes', 
+      description: 'Members acting differently than usual',
+      value: alerts.filter(a => a.type === 'behavioral').length, 
+      color: 'hsl(var(--chart-3))' 
+    },
   ];
   
-  // Severity distribution
+  // Severity distribution with friendly names
   const severityData = [
-    { name: 'Critical', value: alerts.filter(a => a.severity === 'critical').length, color: 'hsl(var(--destructive))' },
-    { name: 'High', value: alerts.filter(a => a.severity === 'high').length, color: 'hsl(var(--warning))' },
-    { name: 'Medium', value: alerts.filter(a => a.severity === 'medium').length, color: 'hsl(var(--chart-5))' },
-    { name: 'Low', value: alerts.filter(a => a.severity === 'low').length, color: 'hsl(var(--muted-foreground))' },
+    { 
+      name: 'Urgent', 
+      description: 'Needs immediate attention',
+      value: alerts.filter(a => a.severity === 'critical').length, 
+      color: 'hsl(var(--destructive))' 
+    },
+    { 
+      name: 'Important', 
+      description: 'Review within 24 hours',
+      value: alerts.filter(a => a.severity === 'high').length, 
+      color: 'hsl(var(--warning))' 
+    },
+    { 
+      name: 'Moderate', 
+      description: 'Check when you have time',
+      value: alerts.filter(a => a.severity === 'medium').length, 
+      color: 'hsl(var(--chart-5))' 
+    },
+    { 
+      name: 'Low Priority', 
+      description: 'For your information',
+      value: alerts.filter(a => a.severity === 'low').length, 
+      color: 'hsl(var(--muted-foreground))' 
+    },
   ];
   
   // Member behavior analysis
@@ -54,10 +84,10 @@ export default function Analytics() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Analytics Dashboard
+          Activity Insights
         </h1>
         <p className="text-muted-foreground">
-          Deep dive into transaction patterns and behavioral analytics
+          See how your members are using their accounts and spot any concerns
         </p>
       </div>
 
@@ -65,8 +95,10 @@ export default function Analytics() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Alert Type Distribution</CardTitle>
-            <CardDescription>Breakdown by detection method</CardDescription>
+            <CardTitle className="text-lg">How We Found Issues</CardTitle>
+            <CardDescription>
+              The different ways our system detected potential problems
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -88,22 +120,39 @@ export default function Analytics() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg max-w-xs">
+                          <p className="font-semibold">{d.name}</p>
+                          <p className="text-sm text-muted-foreground">{d.description}</p>
+                          <p className="text-lg font-bold mt-1">{d.value} issues found</p>
+                        </div>
+                      );
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
+            </div>
+            <div className="mt-4 space-y-2 text-sm">
+              {alertTypeData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="font-medium">{item.name}:</span>
+                  <span className="text-muted-foreground">{item.description}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
         
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Severity Distribution</CardTitle>
-            <CardDescription>Alerts by severity level</CardDescription>
+            <CardTitle className="text-lg">Priority Levels</CardTitle>
+            <CardDescription>
+              How urgent are the issues we've found?
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -125,14 +174,29 @@ export default function Analytics() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg max-w-xs">
+                          <p className="font-semibold">{d.name}</p>
+                          <p className="text-sm text-muted-foreground">{d.description}</p>
+                          <p className="text-lg font-bold mt-1">{d.value} issues</p>
+                        </div>
+                      );
                     }}
                   />
                 </PieChart>
               </ResponsiveContainer>
+            </div>
+            <div className="mt-4 space-y-2 text-sm">
+              {severityData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                  <span className="font-medium">{item.name}:</span>
+                  <span className="text-muted-foreground">{item.description}</span>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -141,64 +205,47 @@ export default function Analytics() {
       {/* Activity Heatmap */}
       <ActivityHeatmap data={heatmapData} />
       
-      {/* Member Behavior Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Member Behavior Analysis</CardTitle>
-          <CardDescription>Top 10 members by risk score with transaction patterns</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={memberBehaviorData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis 
-                  dataKey="member" 
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis 
-                  yAxisId="left"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis 
-                  yAxisId="right"
-                  orientation="right"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Legend />
-                <Bar yAxisId="left" dataKey="riskScore" name="Risk Score %" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="left" dataKey="transactions" name="Transactions" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="right" dataKey="avgAmount" name="Avg Amount (K)" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Interactive Member Chart */}
+      <InteractiveMemberChart data={memberBehaviorData} />
 
-      {/* Volume and Trends */}
+      {/* Volume and Trends with simplified titles */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <VolumeChart data={volumeData} />
-        <HourlyChart data={hourlyData} />
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Weekly Activity</CardTitle>
+            <CardDescription>
+              How many transactions and issues we saw each day this week
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VolumeChart data={volumeData} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Busiest Hours</CardTitle>
+            <CardDescription>
+              When members are most active during the day
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <HourlyChart data={hourlyData} />
+          </CardContent>
+        </Card>
       </div>
       
       <div className="grid gap-6 lg:grid-cols-2">
-        <TrendChart data={trendData} />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Monthly Trends</CardTitle>
+            <CardDescription>
+              How activity and issues have changed over the past months
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TrendChart data={trendData} />
+          </CardContent>
+        </Card>
         <MemberRiskTable profiles={memberProfiles} />
       </div>
     </div>
