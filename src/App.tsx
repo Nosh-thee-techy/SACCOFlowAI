@@ -13,6 +13,8 @@ import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
 import TellerDashboard from "./pages/TellerDashboard";
 import PendingApprovals from "./pages/PendingApprovals";
+import BranchManagerDashboard from "./pages/BranchManagerDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import AuditPanel from "./pages/AuditPanel";
 import Whistleblower from "./pages/Whistleblower";
 import Auth from "./pages/Auth";
@@ -62,9 +64,19 @@ const App = () => (
                   <TellerDashboard />
                 </ProtectedRoute>
               } />
-              <Route path="/approvals" element={
+              <Route path="/pending-approvals" element={
                 <ProtectedRoute allowedRoles={['branch_manager', 'admin']}>
                   <PendingApprovals />
+                </ProtectedRoute>
+              } />
+              <Route path="/branch" element={
+                <ProtectedRoute allowedRoles={['branch_manager', 'admin']}>
+                  <BranchManagerDashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/audit" element={
