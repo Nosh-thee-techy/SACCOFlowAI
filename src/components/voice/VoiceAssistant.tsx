@@ -77,6 +77,18 @@ export function VoiceAssistant() {
     setIsConnecting(true);
     
     try {
+      // Check if microphone is available first
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasAudioInput = devices.some(device => device.kind === 'audioinput');
+      
+      if (!hasAudioInput) {
+        toast.error('No microphone found', {
+          description: 'Voice features require a microphone. You can still use text chat below.'
+        });
+        setIsConnecting(false);
+        return;
+      }
+
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true });
 
@@ -100,11 +112,23 @@ export function VoiceAssistant() {
         signedUrl: data.signed_url,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to start conversation:', error);
-      toast.error('Failed to connect', {
-        description: error instanceof Error ? error.message : 'Please try again'
-      });
+      
+      // Handle specific microphone errors gracefully
+      if (error?.name === 'NotFoundError' || error?.message?.includes('device not found')) {
+        toast.error('No microphone available', {
+          description: 'Voice features require a microphone. Use text input below instead.'
+        });
+      } else if (error?.name === 'NotAllowedError') {
+        toast.error('Microphone access denied', {
+          description: 'Please allow microphone access to use voice features.'
+        });
+      } else {
+        toast.error('Failed to connect', {
+          description: error instanceof Error ? error.message : 'Please try again'
+        });
+      }
     } finally {
       setIsConnecting(false);
     }
